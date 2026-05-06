@@ -127,7 +127,7 @@ public class ViteTagProcessor extends AbstractElementModelProcessor {
     private void handleImportedResource(String importedResource) {
       LOGGER.debug("Handling imported resource: {}", importedResource);
       ManifestEntry manifestEntry = linkResolver.getManifestEntry(importedResource);
-      String file = "/" + manifestEntry.file();
+      String file = linkResolver.resolveBuiltAssetPath(manifestEntry.file());
       if (isCssPath(file)) {
         executeIfNotOutputtedYet(file, () -> htmlEntries.add(tagFactory.generateCssLinkTag(file)));
       } else {

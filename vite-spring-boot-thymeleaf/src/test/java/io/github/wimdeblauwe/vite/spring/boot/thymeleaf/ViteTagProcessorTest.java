@@ -78,7 +78,24 @@ class ViteTagProcessorTest {
             .contains("<link rel=\"stylesheet\" href=\"/assets/common.TBP_tahU.css\">");
   }
 
+  @Test
+  void shouldApplyBuildModeContextPathToImportedChunks() throws Exception {
+    TemplateEngine engine = createTemplateEngine("vite-manifest-example.json", "static", "/myapp");
+    String result = engine.process("example", new Context());
+
+    assertThat(result)
+            // entry chunk gets the context path (already worked)
+            .contains("<script type=\"module\" src=\"/myapp/assets/ButtonBar-8UAhfTQ4.js\"></script>")
+            // imported chunks must also get the context path (regression for missing prefix)
+            .contains("<script type=\"module\" src=\"/myapp/assets/client-3T5L5Tgj.js\">")
+            .doesNotContain("<script type=\"module\" src=\"/assets/client-3T5L5Tgj.js\">");
+  }
+
   private TemplateEngine createTemplateEngine(String manifestResource, String staticResourcesPrefix) throws Exception {
+    return createTemplateEngine(manifestResource, staticResourcesPrefix, null);
+  }
+
+  private TemplateEngine createTemplateEngine(String manifestResource, String staticResourcesPrefix, String buildModeContextPath) throws Exception {
     ClassLoaderTemplateResolver templateResolver = new ClassLoaderTemplateResolver();
     templateResolver.setPrefix("/templates/");
     templateResolver.setSuffix(".html");
@@ -88,7 +105,7 @@ class ViteTagProcessorTest {
     JsonMapper jsonMapper = JsonMapper.builder().build();
 
     ViteConfigurationProperties properties = new ViteConfigurationProperties(ViteConfigurationProperties.Mode.BUILD,
-                                                                             new ClassPathResource(manifestResource), null, staticResourcesPrefix, null, null);
+                                                                             new ClassPathResource(manifestResource), null, staticResourcesPrefix, buildModeContextPath, null);
     ViteDevServerConfigurationProperties devServerConfigurationProperties = new ViteDevServerConfigurationProperties("localhost", 5431);
 
     ViteManifestReader manifestReader = new ViteManifestReader(jsonMapper, properties);
